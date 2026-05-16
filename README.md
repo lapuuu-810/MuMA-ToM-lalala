@@ -125,54 +125,89 @@ mmtom_environment.txt
 
 ## 5. Model and Data Paths
 
-默认工作目录：
+所有命令默认从项目根目录 `MuMA-ToM-lalala/` 开始执行。
+
+进入 LIMP 目录：
 
 ```bash
-cd /data/LPP/cvpr/muti_agent/MuMA-ToM_my/LIMP
+cd LIMP
 ```
 
-默认模型路径：
+默认本地模型路径建议设置为：
 
 ```text
-/data/LPP/cvpr/model/Qwen/Qwen3.5-27B
+../models/Qwen/Qwen3.5-27B
 ```
 
-如果模型路径不同，可以设置：
+如果模型路径不同，可以通过环境变量指定：
 
 ```bash
-export MUMATOM_MODEL_DIR=/your/path/to/Qwen3.5-27B
+export MUMATOM_MODEL_DIR=../models/Qwen/Qwen3.5-27B
 ```
 
-需要准备的数据文件：
+需要准备的数据文件如下：
 
 ```text
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/questions.json
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/texts.json
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/actions_extracted.json
+../Files/questions.json
+../Files/texts.json
+../Files/actions_extracted.json
 ```
 
-视频默认路径：
+视频文件默认建议放在：
 
 ```text
-/data/LPP/cvpr/muti_agent/MUMA-TOM-BENCHMARK/videos
+../videos
+```
+
+如果视频目录不同，需要在 `LIMP/fill_actions_extracted.py` 中修改对应的视频路径配置。
+
+推荐的项目结构如下：
+
+```text
+MuMA-ToM-lalala/
+├── LIMP/
+├── Files/
+│   ├── questions.json
+│   ├── texts.json
+│   └── actions_extracted.json
+├── videos/
+├── models/
+│   └── Qwen/
+│       └── Qwen3.5-27B/
+├── output_evidence/
+│   └── qwen3_5_27b/
+├── local_runs/
+│   └── qwen3_5_27b/
+├── mmtom_environment.txt
+└── README.md
 ```
 
 ---
 
 ## 6. Running Pipeline
 
+完整运行流程包括三个步骤：
+
+1. 生成动作文件；
+2. 生成模型证据；
+3. 运行最终 LIMP 推理。
+
+下面每一步的命令都使用相对路径。
+
+---
+
 ### Step 1: Generate Action File
 
 生成或更新：
 
 ```text
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/actions_extracted.json
+../Files/actions_extracted.json
 ```
 
 运行：
 
 ```bash
-cd /data/LPP/cvpr/muti_agent/MuMA-ToM_my/LIMP
+cd LIMP
 
 python fill_actions_extracted.py
 python supplement_target_actions.py
@@ -190,16 +225,16 @@ python supplement_target_actions.py
 生成：
 
 ```text
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/output_evidence/qwen3_5_27b/model_evidence_strong.json
+../output_evidence/qwen3_5_27b/model_evidence_strong.json
 ```
 
-运行：
+如果当前已经在 `LIMP/` 目录下，运行：
 
 ```bash
 python generate_model_evidence.py \
-  --output /data/LPP/cvpr/muti_agent/MuMA-ToM_my/output_evidence/qwen3_5_27b/model_evidence_strong.json \
-  --questions /data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/questions.json \
-  --texts /data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/texts.json \
+  --output ../output_evidence/qwen3_5_27b/model_evidence_strong.json \
+  --questions ../Files/questions.json \
+  --texts ../Files/texts.json \
   --min-confidence 0.70 \
   --strengths strong
 ```
@@ -211,13 +246,13 @@ python generate_model_evidence.py \
 生成最终结果：
 
 ```text
-/data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json
+../local_runs/qwen3_5_27b/results_new_16_943.json
 ```
 
-运行：
+如果当前已经在 `LIMP/` 目录下，运行：
 
 ```bash
-MUMATOM_RESULTS_FILE=/data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json \
+MUMATOM_RESULTS_FILE=../local_runs/qwen3_5_27b/results_new_16_943.json \
 python LIMP.py
 ```
 
@@ -231,11 +266,15 @@ Accuracy = 0.9433333333333334
 
 ## 7. Quick Test
 
-可以只运行 episode `4005` 进行快速测试：
+可以只运行 episode `4005` 进行快速测试。
+
+从项目根目录运行：
 
 ```bash
+cd LIMP
+
 MUMATOM_EPISODES=4005 \
-MUMATOM_RESULTS_FILE=/tmp/results_new_16_943_repro_4005.json \
+MUMATOM_RESULTS_FILE=../local_runs/qwen3_5_27b/results_new_16_943_repro_4005.json \
 python LIMP.py
 ```
 
@@ -253,12 +292,14 @@ Question 4: C
 
 ## 8. Convert to Submission Format
 
-将内部结果转换为提交格式：
+将内部结果转换为提交格式。
+
+如果当前已经在 `LIMP/` 目录下，运行：
 
 ```bash
 python convert_results_to_submission.py \
-  --input /data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json \
-  --output /data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943_submission.json
+  --input ../local_runs/qwen3_5_27b/results_new_16_943.json \
+  --output ../local_runs/qwen3_5_27b/results_new_16_943_submission.json
 ```
 
 提交文件格式如下：
@@ -277,27 +318,27 @@ python convert_results_to_submission.py \
 
 ## 9. Complete Reproduction Commands
 
-完整复现流程如下：
+完整复现流程如下。下面命令默认从项目根目录执行，可以直接复制运行：
 
 ```bash
-cd /data/LPP/cvpr/muti_agent/MuMA-ToM_my/LIMP
+cd LIMP
 
 python fill_actions_extracted.py
 python supplement_target_actions.py
 
 python generate_model_evidence.py \
-  --output /data/LPP/cvpr/muti_agent/MuMA-ToM_my/output_evidence/qwen3_5_27b/model_evidence_strong.json \
-  --questions /data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/questions.json \
-  --texts /data/LPP/cvpr/muti_agent/MuMA-ToM_my/Files/texts.json \
+  --output ../output_evidence/qwen3_5_27b/model_evidence_strong.json \
+  --questions ../Files/questions.json \
+  --texts ../Files/texts.json \
   --min-confidence 0.70 \
   --strengths strong
 
-MUMATOM_RESULTS_FILE=/data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json \
+MUMATOM_RESULTS_FILE=../local_runs/qwen3_5_27b/results_new_16_943.json \
 python LIMP.py
 
 python convert_results_to_submission.py \
-  --input /data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json \
-  --output /data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943_submission.json
+  --input ../local_runs/qwen3_5_27b/results_new_16_943.json \
+  --output ../local_runs/qwen3_5_27b/results_new_16_943_submission.json
 ```
 
 最终生成：
@@ -327,9 +368,20 @@ local_runs/qwen3_5_27b/results_new_16_943_submission.json
 示例：
 
 ```bash
+cd LIMP
+
 MUMATOM_BACKEND=local \
-MUMATOM_MODEL_DIR=/data/LPP/cvpr/model/Qwen/Qwen3.5-27B \
-MUMATOM_RESULTS_FILE=/data/LPP/cvpr/muti_agent/MuMA-ToM_my/local_runs/qwen3_5_27b/results_new_16_943.json \
+MUMATOM_MODEL_DIR=../models/Qwen/Qwen3.5-27B \
+MUMATOM_RESULTS_FILE=../local_runs/qwen3_5_27b/results_new_16_943.json \
+python LIMP.py
+```
+
+如果使用 Qwen API 后端，可以设置：
+
+```bash
+cd LIMP
+
+MUMATOM_BACKEND=qwen_api \
 python LIMP.py
 ```
 
